@@ -26,7 +26,9 @@ class Utilities:
         # key 가져오기
         load_dotenv()
         user_api_key = os.getenv("UPSTAGE_API_KEY")
-        return user_api_key
+        langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
+
+        return user_api_key, langchain_api_key
 
     
     # 이거 안쓰지 않나? 안쓰면 삭제하도록 2024-10-13

@@ -239,7 +239,7 @@ class Chatbot:
 
                 if gc_result == "grounded":
                     # 응답이 근거에 기반한 경우, 응답을 반환
-                    print("qa_prompt", qa_prompt) 
+                    #print("qa_prompt", qa_prompt) 
                     return response
                 
                 # 응답이 근거에 기반하지 않은 경우, 재시도
@@ -252,11 +252,11 @@ class Chatbot:
                 response = self.get_response_from_chain(qa_prompt, question, context, chat_history)
 
             else: # 추천 질문이 아닌 경우, 즉시 응답을 반환
-                print("qa_prompt", qa_prompt)
+                #print("qa_prompt", qa_prompt)
                 return response
 
        # 7. 최대 재시도 횟수 도달 시 기본 메시지 반환
-        print("qa_prompt", qa_prompt)  
+        #print("qa_prompt", qa_prompt)  
         return response if gc_result == "grounded" else "아직까지 적절한 상품을 찾지 못했어요. 조금만 질문을 구체화해주실 수 있나요?"
     
     def build_prompt(self, context, question, user_id, product_type, is_interest_calculation=False):
@@ -469,7 +469,7 @@ class Chatbot:
 
             # 6. 추출된 텍스트를 하나의 문자열로 합치기
             context = "\n".join(extracted_texts)
-            print(f"Context extracted for product type '{product_type}':\n{context[:500]}...")  # 첫 500글자만 출력
+            #print(f"Context extracted for product type '{product_type}':\n{context[:500]}...")  # 첫 500글자만 출력
             return context
         
         except Exception as e:
