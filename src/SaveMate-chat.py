@@ -59,7 +59,7 @@ else:
         st.subheader("먼저 금융상품 종류를 선택해주세요.")
         product_type = st.radio(
             "추천받을 금융 상품 종류를 선택하세요:",
-            ("추천 외 질문", "예금", "적금", "예금 & 적금"),
+            ("예금", "적금", "예금 & 적금", "추천 외 질문"),
             index=0,
             key="product_type_selection",
         )
@@ -94,7 +94,6 @@ else:
                 query = f"{question.lower()}"
                 product_type = st.session_state.get("product_type", "적용안함")  # 선택된 상품 유형 가져오기
                 context = st.session_state["chatbot"].retrieve_documents(query, product_type=product_type)  # product_type 전달
-                #context = st.session_state["chatbot"].retrieve_documents(query, product_type)
                 chat_history = st.session_state.get("history", [])
 
                 output = st.session_state["chatbot"].generate_responses(

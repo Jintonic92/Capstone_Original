@@ -21,7 +21,7 @@ class Layout:
         """
         st.markdown(
             f"""
-            <h1 style='text-align: center; color: lightblue;'> Save Mate에게 {product_names} 추천받으세요! 😁</h1>
+            <h1 style='text-align: center; color: lightblue;'> 내 손안의 통합금융추천!</h1>
             """,
             unsafe_allow_html=True,
         )

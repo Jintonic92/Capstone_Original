@@ -24,19 +24,12 @@ class Chatbot:
     금융 상식 질의문답 수행
     """
     UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
-
-    # 유효한 은행명과 상품명을 정의하여 Hallucination 방지 
-    predefined_valid_banks = ["NH농협은행", "하나은행", "우리은행", "KB국민은행", "토스은행", "신한은행", "카카오뱅크", "SBI저축은행", "K뱅크"]
-    predefined_valid_products = ["행복 knowhow 연금예금", "트래블로그 여행 적금", "정기예금", "급여하나 월복리 적금", "NH직장인월복리적금", "NH장병내일준비적금", "NH올원e예금", "NH더하고나눔정기예금", "NH내가Green초록세상예금", 
-                                 "WON플러스 예금", "WON 적금", "N일 적금(31일)", "우리 SUPER주거래 적금", "우리 첫거래우대 정기예금", "KB 국민 UP 정기예금", "KB 내맘대로적금", "KB 스타적금", "KB 장병내일준비적금", "직장인우대적금", 
-                                 "KB Star 정기예금", "토스뱅크 굴비 적금", "토스뱅크 먼저 이자 받는 정기예금", "토스뱅크 자유 적금", "토스뱅크 키워봐요 적금", "Tops CD연동정기예금", "쏠편한 정기예금", "신한 My플러스 정기예금", 
-                                 "미래설계 장기플랜 연금예금", "미래설계 크레바스 연금예금", "카카오뱅크 정기예금", "희망정기적금", "적립식예금", "희망정기적금", "회전정기예금", "정기적금", "정기예금", "자유적립예금", "적립식예금", 
-                                 "자유적금", "손주사랑정기적금", "거치식예금", "코드K정기예금", "코드K 자유적금", "주거래우대자유적금"]
-
+    
     # 불용어 목록 추가 (예: '정기')
-    ignore_words = ['정기']
+    #ignore_words = ['정기']
 
-    def __init__(self, retriever_예금, retriever_적금, retriever_예금_적금, data=None): 
+    #def __init__(self, retriever_saving, retriever_deposit, retriever_saving_적금, data=None):
+    def __init__(self, retriever_saving, retriever_deposit, data=None): 
         """
         Chatbot 클래스의 초기화 함수
         """
@@ -47,18 +40,22 @@ class Chatbot:
         self.base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.prompts_path = os.path.join(self.base_path, 'src', 'modules', 'prompts')
 
+        self.data_path = os.path.join(self.base_path, 'src', 'data')
+        self.csv_path_deposit = os.path.join(self.data_path, 'Financial_products_deposit.csv')
+        self.csv_path_savings = os.path.join(self.data_path, 'Financial_products_savings.csv')
+
         # 상품 종류별 리트리버 설정 
-        ## 더 정확한 리트리브를 위함 
-        self.retriever_예금 = retriever_예금
-        self.retriever_적금 = retriever_적금
-        self.retriever_예금_적금 = retriever_예금_적금
+        self.retriever_saving = retriever_saving
+        self.retriever_deposit = retriever_deposit
         self.retriever = None
 
-        # 유효한 은행명과 상품명에서 공백 제거 후 저장
-        self.valid_banks = {self.clean_text(b) for b in self.predefined_valid_banks}
-        self.valid_products = {self.clean_text(p) for p in self.predefined_valid_products}
-        
-        
+
+        # 유효한 은행명과 상품명을 정의하여 Hallucination 방지 
+        df1 = pd.read_csv(self.csv_path_deposit)
+        df2 = pd.read_csv(self.csv_path_savings)
+        self.valid_banks = df1['은행명'].unique().tolist() + df2['은행명'].unique().tolist()
+        self.valid_products = df1['상품명'].unique().tolist() + df2['상품명'].unique().tolist()
+       
        # 데이터 로드 (mydata_dummy.csv 활용)
         if data is None:
             self.data_path = os.path.join(self.base_path, 'src', 'data', 'mydata_dummy.csv')
@@ -110,7 +107,6 @@ class Chatbot:
         # 이자 계산을 위한 few-shot 예제 로드
         self.few_shot_template_path = os.path.join(self.prompts_path, 'few_shot_template.yaml')
         self.few_shot_examples = self.load_yaml(self.few_shot_template_path)
-        
    
         # Pydantic 파서 설정
         ## Pydantic은 데이터의 구조와 유효성을 검사하는 데 유용
@@ -119,15 +115,14 @@ class Chatbot:
         self.parser = PydanticOutputParser(pydantic_object=BankProductDetail)
 
 
-
-    def clean_text(self, text):
-        """ 
-        공백 제거 및 불용어 삭제 
-        """
-        cleaned_text = ''.join(text.split())  # 모든 공백 제거
-        for word in self.ignore_words:
-            cleaned_text = cleaned_text.replace(word, '')  # 불용어 제거
-        return cleaned_text     
+    # def clean_text(self, text):
+    #     """ 
+    #     공백 제거 및 불용어 삭제 
+    #     """
+    #     cleaned_text = ''.join(text.split())  # 모든 공백 제거
+    #     for word in self.ignore_words:
+    #         cleaned_text = cleaned_text.replace(word, '')  # 불용어 제거
+    #     return cleaned_text     
 
     def get_user_details(self, user_id):
         """
@@ -178,8 +173,8 @@ class Chatbot:
         """
 
         # 1. 유효한 은행명과 상품명에서 모든 공백 문자(띄어쓰기, 탭, 줄바꿈 포함) 제거
-        valid_banks = {''.join(b.split()) for b in self.predefined_valid_banks}
-        valid_products = {''.join(p.split()) for p in self.predefined_valid_products}
+        #valid_banks = {''.join(b.split()) for b in self.predefined_valid_banks}
+        #valid_products = {''.join(p.split()) for p in self.predefined_valid_products}
 
         retry_count = 0 # groundedness check 시도 횟수
         gc_result = None # goundedness check result default to None
@@ -226,7 +221,7 @@ class Chatbot:
             response = self.get_response_from_chain(qa_prompt, question, context, chat_history)
 
             # 응답의 유효성 확인 (은행명과 상품명 포함 여부)
-            if not self.is_response_valid(response, valid_banks, valid_products):
+            if not self.is_response_valid(response, self.valid_banks, self.valid_products):
                 print("Response contains invalid bank or product. Retrying...")
                 retry_count += 1
                 continue  # 유효하지 않은 경우 재시도
@@ -549,9 +544,10 @@ class Chatbot:
                 print(f"Bank found in response: {bank}")
 
                 # 비교를 위한 clean_text를 사용하여 처리
-                bank_revised = self.clean_text(bank)  # 은행명 별도 변수로 처리
-                if bank_revised not in valid_banks:
-                    print(f"Invalid bank found: {bank_revised}")
+                #bank_revised = self.clean_text(bank)  # 은행명 별도 변수로 처리
+                if bank not in valid_banks:
+                    print("valid banks:", self.valid_banks)
+                    print(f"Invalid bank found: {bank}")
                     return False
                     
             if "상품명" in line:
@@ -559,9 +555,9 @@ class Chatbot:
                 print(f"Product found in response: {product}")
                 
                 # 비교를 위한 clean_text를 사용하여 처리
-                product_revised = self.clean_text(product)
-                if product_revised not in valid_products:
-                    print(f"Invalid product found: {product_revised}")
+                #product_revised = self.clean_text(product)
+                if product not in valid_products:
+                    print(f"Invalid product found: {product}")
                     return False
         return True
     
@@ -570,11 +566,11 @@ class Chatbot:
             금융 상품 종류에 맞는 리트리버를 설정
             """
             if product_type == '예금':
-                self.retriever = self.retriever_예금
+                self.retriever = self.retriever_saving
             elif product_type == '적금':
-                self.retriever = self.retriever_적금
-            else:
-                self.retriever = self.retriever_예금_적금  # 예금 & 적금 혹은 기타
+                self.retriever = self.retriever_deposit
+            #else:
+                #self.retriever = self.retriever_saving_적금  # 예금 & 적금 혹은 기타
 
 
 class BankProductDetail(BaseModel):

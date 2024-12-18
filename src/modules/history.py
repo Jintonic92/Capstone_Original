@@ -34,22 +34,34 @@ class ChatHistory:
     def extract_product_names(self, response):
         product_pattern = re.compile(r"(은행명\s*:\s*(.*?)\n)?상품명\s*:\s*(.*?)\n")
         matches = product_pattern.findall(response)
+        
+        # 추출된 상품명 반환 (은행명이 있으면 결합, 없으면 상품명만)
         product_names = [match[2] if not match[1] else f"{match[1]} {match[2]}" for match in matches]
         return product_names
 
     def process_assistant_response(self, response_text):
+        """
+        챗봇이 중간에 생성한 응답을 처리하고, 상품명이 포함되어 있으면 버튼을 생성.
+        """
+
+        # 상품명을 추출
         product_names = self.extract_product_names(response_text)
+
+        # 어시스턴트 응답 표시
         st.markdown(f"""
         <div style="background-color: #001F3F; padding: 10px; border-radius: 10px; color: white;">
             {response_text}
         </div>
         """, unsafe_allow_html=True)
 
+        # user_message 초기화. 상품 버튼 누를 시에만 값 업데이트    
         user_message = None
+       
         if product_names:
             st.write("상품 정보를 클릭해 추가 정보를 확인하세요.")
             for idx, product in enumerate(product_names):
-                if st.button(product, key=f"product_button_{idx + self.b_idx}"):
+                if st.button(product, key=f"product_button_{idx + self.b_idx}"):  # 고유한 key 값 추가
+                    # 버튼 클릭 시, 유저의 메시지를 추가하고 화면에 즉시 반영
                     user_message = f"{product} 상품을 확인하고 싶어"
             self.b_idx += 10
         return user_message
