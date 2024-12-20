@@ -314,11 +314,11 @@ class Chatbot:
                 f"  Provide an alternative product from another bank, if applicable.\n"
             )
 
-            # 규칙 2: 객관적인 비교를 통해 단 하나의 최적 상품 추천
+            # 규칙 2: 적용가능한 최대 금리 비교를 통해 단 하나의 최적 상품 추천
             full_prompt += (
-                f"- **Compare all available products objectively** and choose **one best fitting product** "
+                f"- **Compare all products**, identify the **maximum applicable interest rate**, and select the **best fitting product** "
                 f"based on interest rates, bonuses, or other key features.\n"
-                f"Try to recommend only **one** product."
+                f"Ensure to recommend only **one** product."
             )
 
             # 규칙 3: 사용자가 이미 이용 중인 은행 상품을 우선적으로 추천
