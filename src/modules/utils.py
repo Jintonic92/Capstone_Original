@@ -9,6 +9,8 @@ import pdfplumber
 #from langchain_community.vectorstores import Chroma
 from modules.chatbot import Chatbot
 from modules.embedder import Embedder
+from langchain_community.vectorstores import Chroma 
+
 
 from dotenv import load_dotenv
 
@@ -26,7 +28,9 @@ class Utilities:
         # key 가져오기
         load_dotenv()
         user_api_key = os.getenv("UPSTAGE_API_KEY")
-        return user_api_key
+        langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
+
+        return user_api_key, langchain_api_key
 
     
     # 이거 안쓰지 않나? 안쓰면 삭제하도록 2024-10-13
@@ -82,27 +86,80 @@ class Utilities:
     #    print(uploaded_file.name)
         
     #    return uploaded_file
+    # def get_retriever(self, product_type, source):
+    #     """PDF 또는 DataFrame 기반 retriever 로드"""
+    #     persist_path = os.path.join(
+    #         self.base_path,
+    #         "embeddings",
+    #         f"{product_type}_{source}"
+    #     )
 
+    #     vector_store = Chroma(
+    #         persist_directory=persist_path,
+    #         embedding_function=self.embedding_model
+    #     )
+
+    #     return vector_store.as_retriever(
+    #         search_kwargs={
+    #         "k": 3,
+    #     }
+    #     )
+
+    # @staticmethod
+    # def setup_chatbot():
+    #     """
+    #     업로드된 파일을 기반으로 챗봇을 설정하는 함수
+    #     """
+    #     embeds = Embedder()
+    #         # 임베딩 존재 여부 확인
+    #     if not (embeds.check_embeddings_exist('예금', 'df') and 
+    #             embeds.check_embeddings_exist('적금', 'df')):
+    #         print("Creating embeddings first...")
+
+    #     # 각 금융상품에 맞는 리트리버 생성
+    #     retriever_deposit = embeds.get_retriever('예금', 'df')
+    #     retriever_savings = embeds.get_retriever('적금', 'df')
+    #     #retrievr_both = embeds.get_retriever('예금 & 적금', 'df')
+        
+    #     print('Go to Chatbot __init__')
+
+    #     # 금융상품별 리트리버를 전달하여 Chatbot 인스턴스 생성
+    #     #chatbot = Chatbot(retriever_deposit, retriever_savings, retrievr_both)
+    #     chatbot = Chatbot(retriever_deposit, retriever_savings)
+    #     # 챗봇이 준비되었다는 세션 상태 표시
+    #     st.session_state["ready"] = True
+
+    #     print("st.session_state['ready'] : ", st.session_state['ready'])
+
+    #     return chatbot
+    
     @staticmethod
     def setup_chatbot():
         """
         업로드된 파일을 기반으로 챗봇을 설정하는 함수
         """
         embeds = Embedder()
+        print(hasattr(Embedder, 'check_embeddings_exist'))  # Should print True
+        print("="* 80)
+        print(embeds.__dict__) 
+
+        # 임베딩 존재 여부 확인
+        if not (embeds.check_embeddings_exist('예금', 'df') and 
+                embeds.check_embeddings_exist('적금', 'df')):
+            print("Creating embeddings first...")
+            embeds.create_all_embeddings()
         
         # 각 금융상품에 맞는 리트리버 생성
-        retriever_예금 = embeds.get_retriever('예금')
-        retriever_적금 = embeds.get_retriever('적금')
-        retriever_예금_적금 = embeds.get_retriever('예금 & 적금')
+        deposit_retrievers = embeds.get_retriever('예금')
+        savings_retrievers = embeds.get_retriever('적금')
+        
+        retriever_deposit = deposit_retrievers['df']
+        retriever_savings = savings_retrievers['df']
         
         print('Go to Chatbot __init__')
-
-        # 금융상품별 리트리버를 전달하여 Chatbot 인스턴스 생성
-        chatbot = Chatbot(retriever_예금, retriever_적금, retriever_예금_적금)
+        chatbot = Chatbot(retriever_deposit, retriever_savings)
         
-        # 챗봇이 준비되었다는 세션 상태 표시
         st.session_state["ready"] = True
-
         print("st.session_state['ready'] : ", st.session_state['ready'])
-
+        
         return chatbot
